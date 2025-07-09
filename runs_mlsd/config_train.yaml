@@ -1,0 +1,48 @@
+datasets:
+    name: 'wireframe'
+    input_size: 512
+
+model:
+    model_name: 'mobilev2_mlsd_large'
+    with_deconv: True
+
+
+train:
+    save_dir:  "./runs_mlsd"
+    img_dir:  "./datasets/taihe_0625_hangdian_640/train/"
+    label_fn: "./datasets/taihe_0625_hangdian_640/train.json"
+    num_train_epochs: 120
+    batch_size: 8
+    learning_rate: 0.001
+    use_step_lr_policy: True
+    weight_decay: 0.000001
+#    load_from: r"D:\PyProject\MLSD\models_mlsd\mlsd_large_512_fp32.pth"
+    load_from: r"D:\PyProject\MLSD\models_mlsd\mobilev2_mlsd_large_512_bsize24\best.pth"
+    warmup_steps: 500
+    milestones: [ 40, 80, 100 ]
+    milestones_in_epo: True
+    lr_decay_gamma: 0.5
+
+    data_cache_dir: "./data/wireframe_cache/"
+    with_cache: False
+    cache_to_mem: False
+
+val:
+    img_dir: "./datasets/taihe_0625_hangdian_640/val/"
+    label_fn: "./datasets/taihe_0625_hangdian_640/val.json"
+    batch_size: 4
+    val_after_epoch: 5
+
+loss:
+    loss_weight_dict_list: [ { 'tp_center_loss': 2.0,'sol_center_loss': 5.0,'tp_match_loss':1.0 } ]
+    
+    with_match_loss: True
+    with_focal_loss: True
+    focal_loss_level: 1
+    with_sol_loss: True
+    match_sap_thresh: 3.0
+
+decode:
+    score_thresh: 0.1
+    len_thresh: 10
+    top_k: 1000

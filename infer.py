@@ -38,6 +38,9 @@ def img_resize(img, window_size=640, stride=512):
 
 def crop_window_tif(input_path, if_save=False, window_size=640, stride=512):
     img = cv2.imread(input_path)
+    # tif-4通道 -> jpg-3通道
+    if img.shape[2] != 3:
+        img = img[:, :, :3]
     img = img_resize(img, window_size, stride)
     h, w = img.shape[:2]
 
@@ -378,7 +381,7 @@ def filter_masks(filter_mask):
     red_contours, _ = cv2.findContours(red_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # blue_contours, _ = cv2.findContours(blue_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for contour in red_contours:
-        if cv2.contourArea(contour) < 500:  # 使用>=更直观
+        if cv2.contourArea(contour) < 1000:  # 使用>=更直观
             cv2.drawContours(filter_mask, [contour], -1, (255, 0, 0), -1)
     # for contour in blue_contours:
     #     if cv2.contourArea(contour) >= 10:
@@ -421,10 +424,13 @@ def merge_jpg_and_mask(img_list, mask_list, if_save=None):
 
 if __name__ == '__main__':
     # TAG_SAVE
-    TAG_SAVE_CROP_IMG = False
+    TAG_SAVE_CROP_IMG = True
     TAG_SAVE_MLSD_MASK = True
     TAG_SAVE_ROTATED_IMG = True
     TAG_SAVE_LINE_IMG = True
+    TAG_SAVE_YOLO_STRIP = True
+    TAG_SAVE_YOLO_SQUARE = True
+    TAG_SAVE_YOLO = True
     TAG_SAVE_RES = True
 
     # PARAMETERS
@@ -453,8 +459,6 @@ if __name__ == '__main__':
         restored_mask_row_list = []
         for j, img in enumerate(img_row):
             img_crop_name = f"{img_name}_{i}_{j}.jpg"
-            if img.shape[2] != 3:
-                img = img[:, :, :3]
 
             # mlsd算法推理
             lines = mlsd_infer(mlsd_model, img)
@@ -498,10 +502,24 @@ if __name__ == '__main__':
             restored_mask = restore_img(
                 rotated_mask, M1, shape=img.shape[:2])[IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]]
 
+            if TAG_SAVE_YOLO_STRIP:
+                merged_img_mask = cv2.addWeighted(rotated_img, 1, rotated_mask, 0.5, gamma=0)
+                save_line_dir = data_dir + "_YOLO_Strip"
+                os.makedirs(save_line_dir, exist_ok=True)
+                cv2.imwrite(os.path.join(save_line_dir, img_crop_name), merged_img_mask)
+
             # todo：方形图检测
             yolo_img2, mask_img2 = yolo_infer(yolo_model, rotated_img)
+            restored_img2 = restore_img(yolo_img2, M1, shape=img.shape[:2])[
+                             IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]]
             restored_mask2 = restore_img(mask_img2, M1, shape=img.shape[:2])[
                              IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]]
+
+            if TAG_SAVE_YOLO_SQUARE:
+                merged_img_mask = cv2.addWeighted(yolo_img2, 1, mask_img2, 0.5, gamma=0)
+                save_line_dir = data_dir + "_YOLO_Square"
+                os.makedirs(save_line_dir, exist_ok=True)
+                cv2.imwrite(os.path.join(save_line_dir, img_crop_name), merged_img_mask)
 
             # todo: merge条形图为底
             restored_mask_black = (restored_mask[:, :, 0] == 0) & (restored_mask[:, :, 1] == 0) & (
@@ -510,6 +528,12 @@ if __name__ == '__main__':
 
             # 掩码过滤
             restored_mask = filter_masks(restored_mask)
+
+            if TAG_SAVE_YOLO:
+                merged_img_mask = cv2.addWeighted(img[IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]], 1, restored_mask, 0.5, gamma=0)
+                save_line_dir = data_dir + "_YOLO"
+                os.makedirs(save_line_dir, exist_ok=True)
+                cv2.imwrite(os.path.join(save_line_dir, img_crop_name), merged_img_mask)
 
             # 二维list保存掩码
             restored_mask_row_list.append(restored_mask)

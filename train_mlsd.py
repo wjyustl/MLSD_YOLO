@@ -20,7 +20,7 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config",
-                        default=os.path.dirname(__file__) + '/runs_mlsd/config_train.yaml',
+                        default=os.path.dirname(__file__) + '/runs_mlsd/corn_mlsd.yaml',
                         type=str,
                         help="")
     return parser.parse_args()

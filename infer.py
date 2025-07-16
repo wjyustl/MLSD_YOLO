@@ -1,16 +1,17 @@
-import torch
-import os
-import cv2
 import math
-import matplotlib.pyplot as plt
-from sklearn.cluster import DBSCAN
-from tqdm import tqdm
-import numpy as np
-from ultralytics import YOLO
-from sklearn.linear_model import LinearRegression, RANSACRegressor
+import os
 
-from utils import pred_lines, line_angle, line_midpoint, rotate_img_and_lines
+import cv2
+import numpy as np
+import torch
+from PIL import Image
+from sklearn.cluster import DBSCAN
+from sklearn.linear_model import LinearRegression, RANSACRegressor
+from tqdm import tqdm
+from ultralytics import YOLO
+
 from mlsd_pytorch.models.mbv2_mlsd_large import MobileV2_MLSD_Large
+from utils import pred_lines, line_angle, rotate_img_and_lines
 
 
 def load_model(model_path):
@@ -37,6 +38,7 @@ def img_resize(img, window_size=640, stride=512):
 
 
 def crop_window_tif(input_path, if_save=False, window_size=640, stride=512):
+    img_pil = Image.open(input_path)
     img = cv2.imread(input_path)
     # tif-4通道 -> jpg-3通道
     if img.shape[2] != 3:
@@ -440,7 +442,7 @@ if __name__ == '__main__':
 
     # CONFIG
     mlsd_model_path = r"D:\PyProject\MLSD\runs_mlsd\taihe_0625_hangdian_640\best.pth"
-    yolo_model_path = "runs_yolo/train_0707/weights/best.pt"
+    yolo_model_path = "runs_yolo/taihe_corn_0707/weights/best.pt"
     data_path = r"D:\_DATA\taihe_0625\hangdian\TEST\DJI_20250625170747_0033.JPG"
 
     # START

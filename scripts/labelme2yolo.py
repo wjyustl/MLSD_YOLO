@@ -1,7 +1,7 @@
 import json
 import os
 
-category_dict = {'plant': 0, 'blank': 1}  # 类别字典
+category_dict = {'weed': 0}  # 类别字典
 # category_dict = {'blank': 0}
 
 def json_to_yolo(input_file_path, output_directory):
@@ -30,8 +30,8 @@ def json_to_yolo(input_file_path, output_directory):
         file_handle.write(yolo_format_content)
 
 
-input_directory = r"D:\_DATA\taihe_0625\hangdian\yolo\data"
-output_directory = r"D:\_DATA\taihe_0625\hangdian\yolo\label"
+input_directory = r"D:\PyProject\MLSD\datasets\weed_det\data"
+output_directory = r"D:\PyProject\MLSD\datasets\weed_det\label"
 os.makedirs(output_directory, exist_ok=True)
 
 file_list = os.listdir(input_directory)

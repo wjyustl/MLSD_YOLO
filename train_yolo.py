@@ -9,4 +9,5 @@ if __name__ == '__main__':
     model = YOLO("yolov8n.pt")
 
     # Train the model
-    results = model.train(data="runs_yolo/corn_yolo.yaml", epochs=200, imgsz=512, batch=8, device=0, project="runs_yolo")
+    # results = model.train(data="runs_yolo/corn_yolo.yaml", epochs=200, imgsz=512, batch=8, device=0, project="runs_yolo")
+    results = model.train(data="runs_yolo/weed_yolo.yaml", epochs=200, imgsz=512, batch=8, device=0, project="runs_yolo")

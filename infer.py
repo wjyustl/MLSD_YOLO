@@ -248,8 +248,6 @@ def fit_segments_to_line(segments, method='ransac', max_trials=100, residual_thr
         max_trials: RANSAC最大迭代次数
         residual_threshold: RANSAC残差阈值（像素）
     """
-    if len(segments) == 0:
-        return None, None, []
 
     # 1. 提取所有线段端点
     all_points = []
@@ -426,13 +424,13 @@ def merge_jpg_and_mask(img_list, mask_list, if_save=None):
 
 if __name__ == '__main__':
     # TAG_SAVE
-    TAG_SAVE_CROP_IMG = True
-    TAG_SAVE_MLSD_MASK = True
-    TAG_SAVE_ROTATED_IMG = True
-    TAG_SAVE_LINE_IMG = True
-    TAG_SAVE_YOLO_STRIP = True
-    TAG_SAVE_YOLO_SQUARE = True
-    TAG_SAVE_YOLO = True
+    TAG_SAVE_CROP_IMG = False
+    TAG_SAVE_MLSD_MASK = False
+    TAG_SAVE_ROTATED_IMG = False
+    TAG_SAVE_LINE_IMG = False
+    TAG_SAVE_YOLO_STRIP = False
+    TAG_SAVE_YOLO_SQUARE = False
+    TAG_SAVE_YOLO = False
     TAG_SAVE_RES = True
 
     # PARAMETERS
@@ -441,9 +439,9 @@ if __name__ == '__main__':
     IMG_SCOPE = (int((WINDOWS_SIZE - CROP_STRIDE) / 2), int((WINDOWS_SIZE + CROP_STRIDE) / 2))
 
     # CONFIG
-    mlsd_model_path = r"D:\PyProject\MLSD\runs_mlsd\taihe_0625_hangdian_640\best.pth"
-    yolo_model_path = "runs_yolo/taihe_corn_0707/weights/best.pt"
-    data_path = r"D:\_DATA\taihe_0625\hangdian\TEST\DJI_20250625170747_0033.JPG"
+    mlsd_model_path = r"D:\PyProject\MLSD_YOLO\Project_Emergence\mlsd_taihe_0625_hangdian_0707\best.pth"
+    yolo_model_path = r"D:\PyProject\MLSD_YOLO\Project_Emergence\yolo_taihe_0625_hangdian_0707\weights\best.pt"
+    data_path = r"D:\_DATA\Emergence Detection\taihe_0625\hangdian_0707\TEST\DJI_20250625170747_0033.JPG"
 
     # START
     mlsd_model = load_model(mlsd_model_path)

@@ -25,8 +25,8 @@ def get_args():
                         help="")
     return parser.parse_args()
 
-from models_mlsd.mbv2_mlsd_large import MobileV2_MLSD_Large
-# from mlsd_pytorch.models_mlsd.mbv2_mlsd_large import MobileV2_MLSD_Large
+from mlsd_models.mbv2_mlsd_large import MobileV2_MLSD_Large
+# from mlsd_pytorch.mlsd_models.mbv2_mlsd_large import MobileV2_MLSD_Large
 
 def train(cfg):
     train_loader = get_train_dataloader(cfg)

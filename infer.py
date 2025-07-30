@@ -73,7 +73,7 @@ def crop_window_tif(input_path, if_save=False, window_size=640, stride=512):
             #     )
 
             if if_save:
-                save_mlsd_dir = data_dir + "_CROP"
+                save_mlsd_dir = data_dir + "_1CROP"
                 os.makedirs(save_mlsd_dir, exist_ok=True)
                 cv2.imwrite(os.path.join(
                     save_mlsd_dir, f"{os.path.splitext(os.path.basename(input_path))[0]}_{i}_{j}.jpg"), crop)
@@ -171,7 +171,7 @@ def filter_lines(img, lines, if_save=False):
         filter_mask = img.copy()
         for line in filtered_lines_main:
             cv2.line(filter_mask, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (0, 200, 200), 1, 16)
-        save_mlsd_dir = data_dir + "_MLSD_FILTER"
+        save_mlsd_dir = data_dir + "_2MLSD_FILTER"
         os.makedirs(save_mlsd_dir, exist_ok=True)
         cv2.imwrite(os.path.join(save_mlsd_dir, img_crop_name), filter_mask)
         if sec_avg_angle:
@@ -223,7 +223,7 @@ def cluster_lines(rotated_img, rotated_lines, if_save1=False, if_save2=False):
             {"M": M2, "rotated_rotated_img": rotated_rotated_img, "crop_line_img": crop_line_img, "location": location})
 
         if if_save1:
-            save_line_dir = data_dir + "_LINE"
+            save_line_dir = data_dir + "_4LINE"
             os.makedirs(save_line_dir, exist_ok=True)
             cv2.imwrite(os.path.join(save_line_dir, img_crop_name.replace(".jpg", f"_{num}") + ".jpg"),
                         crop_line_img)
@@ -231,7 +231,10 @@ def cluster_lines(rotated_img, rotated_lines, if_save1=False, if_save2=False):
         cv2.line(rotated_mask, (int(x1), int(y1)), (int(x2), int(y2)), (0, 200, 200), 1, 16)
 
     if if_save2:
-        save_line_dir = data_dir + "_ROTATED"
+        save_line_dir = data_dir + "_3ROTATED_IMG"
+        os.makedirs(save_line_dir, exist_ok=True)
+        cv2.imwrite(os.path.join(save_line_dir, img_crop_name), rotated_img)
+        save_line_dir = data_dir + "_3ROTATED_MASK"
         os.makedirs(save_line_dir, exist_ok=True)
         cv2.imwrite(os.path.join(save_line_dir, img_crop_name), rotated_mask)
 
@@ -375,17 +378,17 @@ def restore_img(img, M, shape):
 
 def filter_masks(filter_mask):
     # mask = np.zeros_like(filter_mask)
-    # # 面积大小过滤
-    red_mask = np.where((filter_mask[:, :, 2] > 200) & (filter_mask[:, :, 0] < 50) & (filter_mask[:, :, 1] < 50), 255, 0)
-    # blue_mask = np.where((filter_mask[:, :, 0] > 200) & (filter_mask[:, :, 1] < 50) & (filter_mask[:, :, 2] < 50), 255, 0)
-    red_contours, _ = cv2.findContours(red_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # blue_contours, _ = cv2.findContours(blue_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for contour in red_contours:
-        if cv2.contourArea(contour) < 1000:  # 使用>=更直观
+    # 面积大小过滤
+    # red_mask = np.where((filter_mask[:, :, 2] > 200) & (filter_mask[:, :, 0] < 50) & (filter_mask[:, :, 1] < 50), 255, 0)
+    blue_mask = np.where((filter_mask[:, :, 0] > 200) & (filter_mask[:, :, 1] < 50) & (filter_mask[:, :, 2] < 50), 255, 0)
+    # red_contours, _ = cv2.findContours(red_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    blue_contours, _ = cv2.findContours(blue_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # for contour in red_contours:
+    #     if cv2.contourArea(contour) < 1000:  # 使用>=更直观
+    #         cv2.drawContours(filter_mask, [contour], -1, (255, 0, 0), -1)
+    for contour in blue_contours:
+        if cv2.contourArea(contour) < 1000:
             cv2.drawContours(filter_mask, [contour], -1, (255, 0, 0), -1)
-    # for contour in blue_contours:
-    #     if cv2.contourArea(contour) >= 10:
-    #         cv2.drawContours(mask, [contour], -1, (255, 0, 0), -1)
     # filter_mask = mask
 
     # 形态学过滤
@@ -412,7 +415,7 @@ def merge_jpg_and_mask(img_list, mask_list, if_save=None):
     merged_img_mask = cv2.addWeighted(merged_img, 1, merged_mask, 0.5, gamma=0)
 
     if if_save:
-        save_res_dir = data_dir + "_RES"
+        save_res_dir = data_dir + "_6RES"
         os.makedirs(save_res_dir, exist_ok=True)
         cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_img.jpg"), merged_img)
         cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_mask.png"), merged_mask)
@@ -440,8 +443,8 @@ if __name__ == '__main__':
 
     # CONFIG
     mlsd_model_path = r"D:\PyProject\MLSD_YOLO\Project_Emergence\mlsd_taihe_0625_hangdian_0707\best.pth"
-    yolo_model_path = r"D:\PyProject\MLSD_YOLO\Project_Emergence\yolo_taihe_0625_hangdian_0707\weights\best.pt"
-    data_path = r"D:\_DATA\Emergence Detection\taihe_0625\hangdian_0707\TEST\DJI_20250625170747_0033.JPG"
+    yolo_model_path = r"D:\PyProject\MLSD_YOLO\Project_Emergence\yolo_taihe_0721_hangdian_0722\weights\best.pt"
+    data_path = r"D:\_DATA\Emergence_Detection\taihe_0721\TEST\929_transparent_mosaic_group1.tif"
 
     # START
     mlsd_model = load_model(mlsd_model_path)
@@ -504,7 +507,7 @@ if __name__ == '__main__':
 
             if TAG_SAVE_YOLO_STRIP:
                 merged_img_mask = cv2.addWeighted(rotated_img, 1, rotated_mask, 0.5, gamma=0)
-                save_line_dir = data_dir + "_YOLO_Strip"
+                save_line_dir = data_dir + "_5YOLO_Strip"
                 os.makedirs(save_line_dir, exist_ok=True)
                 cv2.imwrite(os.path.join(save_line_dir, img_crop_name), merged_img_mask)
 
@@ -517,7 +520,7 @@ if __name__ == '__main__':
 
             if TAG_SAVE_YOLO_SQUARE:
                 merged_img_mask = cv2.addWeighted(yolo_img2, 1, mask_img2, 0.5, gamma=0)
-                save_line_dir = data_dir + "_YOLO_Square"
+                save_line_dir = data_dir + "_5YOLO_Square"
                 os.makedirs(save_line_dir, exist_ok=True)
                 cv2.imwrite(os.path.join(save_line_dir, img_crop_name), merged_img_mask)
 
@@ -531,7 +534,7 @@ if __name__ == '__main__':
 
             if TAG_SAVE_YOLO:
                 merged_img_mask = cv2.addWeighted(img[IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]], 1, restored_mask, 0.5, gamma=0)
-                save_line_dir = data_dir + "_YOLO"
+                save_line_dir = data_dir + "_5YOLO"
                 os.makedirs(save_line_dir, exist_ok=True)
                 cv2.imwrite(os.path.join(save_line_dir, img_crop_name), merged_img_mask)
 
@@ -544,4 +547,9 @@ if __name__ == '__main__':
     # 计算缺苗率
     blue_area = np.count_nonzero(merged_mask[:, :, 0] == 255)
     red_area = np.count_nonzero(merged_mask[:, :, 2] == 255)
-    print(f"缺苗率={'%.3f' % (red_area / (blue_area + red_area))}")
+    black_area = np.count_nonzero(merged_mask == [0, 0, 0])
+    print(blue_area)
+    print(red_area)
+    print(black_area)
+    # print(f"缺苗率={'%.3f' % (red_area / (blue_area + red_area))}")
+    print(f"缺苗率={'%.3f' % (blue_area / (black_area + blue_area))}")

@@ -1,0 +1,22 @@
+# weed.yaml
+train: D:/_DATA/Weed_Detection/changshu_weed_0729/train/images
+val: D:/_DATA/Weed_Detection/changshu_weed_0729/val/images
+
+nc: 1
+
+names:
+  0: "weed"
+
+#augmentation:
+#  # 空样本专用增强
+#  empty_aug:
+#    - name: RandomGamma
+#      gamma_limit: (70, 130)  # 模拟光照变化
+#      p: 0.7
+#    - name: MotionBlur
+#      blur_limit: 15
+#      p: 0.5
+#  # 全局增强
+#  hsv_h: 0.015
+#  hsv_s: 0.7
+#  hsv_v: 0.4

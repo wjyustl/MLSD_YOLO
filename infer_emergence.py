@@ -411,7 +411,7 @@ def merge_mask(img_ori, mask_list, if_save=None):
     start_y = (h - mh) // 2
     start_x = (w - mw) // 2
     mask[start_y:start_y+mh, start_x:start_x+mw] = merged_mask
-    img_mask = cv2.addWeighted(img_ori, 1, mask, 0.5, gamma=0)
+    img_mask = cv2.addWeighted(img_mask, 1, mask, 0.5, gamma=0)
 
     if if_save:
         save_res_dir = data_dir + "_6RES"
@@ -419,7 +419,7 @@ def merge_mask(img_ori, mask_list, if_save=None):
         cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_img_mask.jpg"), img_mask)
         cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_mask.png"), mask)
         if data_path.endswith(".tif"):
-            replace_rgb_in_geotiff(data_path, img_ori,
+            replace_rgb_in_geotiff(data_path, img_mask,
                                    output_path=os.path.join(save_res_dir, f"{img_name}_img_mask.tif"))
     return img_mask, mask
 
@@ -563,7 +563,7 @@ if __name__ == '__main__':
             restored_mask_row_list.append(restored_mask)
         restored_mask_list.append(restored_mask_row_list)
 
-    img_list = [[img[IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]] for img in img_row] for img_row in img_list]
+    # img_list = [[img[IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]] for img in img_row] for img_row in img_list]
     img_ori, mask_ori = merge_mask(img_ori, restored_mask_list, if_save=TAG_SAVE_RES)
 
     # 计算缺苗率

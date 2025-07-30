@@ -1,0 +1,11 @@
+train: D:/_DATA/Emergence_Detection/taihe_0721/0728_hangdian/train/images
+val: D:/_DATA/Emergence_Detection/taihe_0721/0728_hangdian/val/images
+test:
+
+nc: 1
+
+# Classes
+#names: ['plant','blank']
+names:
+#  0: "plant"
+  0: "blank"

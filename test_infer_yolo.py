@@ -6,7 +6,7 @@ from ultralytics import YOLO
 model = YOLO(r"D:\PyProject\MLSD_YOLO\Project_Emergence\yolo_taihe_0721_hangdian_0728\weights\best.pt")
 img = cv2.imread(r"D:\_DATA\Emergence_Detection\taihe_0721\0728_hangdian\val\images\DJI_20250721161241_0002_splited_1_3.jpg")
 
-results = model.predict(model="Project_Emergence/yolo.yaml", source=img, save=False, imgsz=512, conf=0.2, iou=0.2, verbose=False)
+results = model.predict(model="Project_Emergence/emergence_yolo.yaml", source=img, save=False, imgsz=512, conf=0.2, iou=0.2, verbose=False)
 
 print("原始类别ID:", results[0].boxes.cls)
 print("模型类别映射:", results[0].names)

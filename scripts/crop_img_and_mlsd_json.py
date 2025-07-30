@@ -138,7 +138,7 @@ def crop_image(input_dir, output_dir, crop_size=(640, 640)):
     os.makedirs(output_dir, exist_ok=True)
 
     for img_name in os.listdir(input_dir):
-        if img_name.endswith((".jpg", ".JPG")):
+        if img_name.endswith(("jpeg", ".jpg", ".JPG")):
             img_path = os.path.join(input_dir, img_name)
             img = Image.open(img_path)
             width, height = img.size
@@ -161,7 +161,7 @@ def crop_image(input_dir, output_dir, crop_size=(640, 640)):
                     cropped_img = img.crop((left, upper, right, lower))
 
                     # 保存裁剪后的图像
-                    output_path = os.path.join(output_dir, f"{img_name.replace('.JPG', '')}_{i}_{j}.jpg")
+                    output_path = os.path.join(output_dir, f"{img_name.replace('.jpeg', '')}_{i}_{j}.jpeg")
                     cropped_img.save(output_path)
 
 
@@ -170,10 +170,10 @@ if __name__ == "__main__":
     # 配置参数
     img_path = r"D:\_DATA\taihe_0625\hangdian\DJI_20250625170357_0008.jpg"
     json_path = r"D:\_DATA\taihe_0625\hangdian\DJI_20250625170357_0008.json"
-    input_dir = r"D:\_DATA\taihe_0624\select_5"
-    output_dir = r"D:\_DATA\taihe_0625\hangdian\mlsd_all"
-    crop_size = (640, 640)  # 小图尺寸
+    input_dir = r"D:\_DATA\Emergence Detection\老田15m飞 2025-07-21 17_07_51 (UTC+08)"
+    output_dir = r"D:\_DATA\Emergence Detection\老田15m飞 2025-07-21 17_07_51 (UTC+08)\res"
+    crop_size = (256, 256)  # 小图尺寸
 
-    split_image_and_annotations(img_path, json_path, output_dir, crop_size)
-    # crop_image(input_dir, output_dir, crop_size=(500, 500))
+    # split_image_and_annotations(img_path, json_path, output_dir, crop_size)
+    crop_image(input_dir, output_dir, crop_size=crop_size)
     print("\n裁剪完成! 输出位置:", os.path.abspath(output_dir))

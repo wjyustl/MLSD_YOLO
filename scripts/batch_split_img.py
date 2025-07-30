@@ -77,8 +77,8 @@ def organize_images_into_batches(directory, batch_size=200):
 if __name__ == "__main__":
     # 设置命令行参数解析
     parser = argparse.ArgumentParser(description='将图像文件按批次组织到文件夹中')
-    parser.add_argument('--directory', default=r"D:\_DATA\taihe_0625\hangdian\selected", help='包含图像的根目录路径')
-    parser.add_argument('-b', '--batch-size', type=int, default=200,
+    parser.add_argument('--directory', default=r"D:\_DATA\Emergence Detection\taihe_0721\HDY\TRAIN", help='包含图像的根目录路径')
+    parser.add_argument('-b', '--batch-size', type=int, default=60,
                         help='每批次的图像数量 (默认: 200)')
 
     args = parser.parse_args()

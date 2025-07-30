@@ -64,7 +64,7 @@ def split_data(file_path, label_path, new_file_path, train_rate, val_rate, test_
 
 
 if __name__ == '__main__':
-    file_path = r"D:\PyProject\MLSD\datasets\weed_det\data"  # 图片文件夹
-    label_path = r'D:\PyProject\MLSD\datasets\weed_det\label'  # 标签文件夹
-    new_file_path = r"D:\PyProject\MLSD\datasets\weed_det"  # 新数据存放位置
+    file_path = r"D:\_DATA\Weed_Detection\changshu_weed_0729\data"  # 图片文件夹
+    label_path = r'D:\_DATA\Weed_Detection\changshu_weed_0729\label'  # 标签文件夹
+    new_file_path = r"D:\_DATA\Weed_Detection\changshu_weed_0729"  # 新数据存放位置
     split_data(file_path, label_path, new_file_path, train_rate=0.8, val_rate=0.2, test_rate=0)

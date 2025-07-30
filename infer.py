@@ -1,6 +1,6 @@
 import math
 import os
-
+import rasterio
 import cv2
 import numpy as np
 import torch
@@ -37,13 +37,10 @@ def img_resize(img, window_size=640, stride=512):
     return img
 
 
-def crop_window_tif(input_path, if_save=False, window_size=640, stride=512):
-    img_pil = Image.open(input_path)
-    img = cv2.imread(input_path)
-    # tif-4通道 -> jpg-3通道
-    if img.shape[2] != 3:
-        img = img[:, :, :3]
-    img = img_resize(img, window_size, stride)
+def crop_window_tif(img_ori, img_path, if_save=False, window_size=640, stride=512):
+    # img_pil = Image.open(input_path)
+    # img_ori = cv2.imread(input_path)
+    img = img_resize(img_ori, window_size, stride)
     h, w = img.shape[:2]
 
     num_rows = (h - window_size + stride) // stride  # 行数
@@ -76,13 +73,13 @@ def crop_window_tif(input_path, if_save=False, window_size=640, stride=512):
                 save_mlsd_dir = data_dir + "_1CROP"
                 os.makedirs(save_mlsd_dir, exist_ok=True)
                 cv2.imwrite(os.path.join(
-                    save_mlsd_dir, f"{os.path.splitext(os.path.basename(input_path))[0]}_{i}_{j}.jpg"), crop)
+                    save_mlsd_dir, f"{os.path.splitext(os.path.basename(img_path))[0]}_{i}_{j}.jpg"), crop)
 
             crop_list_row.append(crop)
 
         crop_list.append(crop_list_row)
 
-    return crop_list, os.path.splitext(os.path.basename(input_path))[0]
+    return crop_list, os.path.splitext(os.path.basename(img_path))[0]
 
 
 def mlsd_infer(model, img):
@@ -333,7 +330,7 @@ def fit_segments_to_line(segments, method='ransac', max_trials=100, residual_thr
 
 
 def yolo_infer(model, img):
-    results = model.predict(model="runs_yolo/corn_yolo.yaml", source=img, save=False, imgsz=512, conf=0.1, iou=0.2,
+    results = model.predict(model="runs_yolo/corn_yolo.yaml", source=img, save=False, imgsz=512, conf=0.01, iou=0.2,
                             verbose=False)
 
     # print("原始类别ID:", results[0].boxes.cls)
@@ -400,29 +397,50 @@ def filter_masks(filter_mask):
     return filter_mask
 
 
-def merge_jpg_and_mask(img_list, mask_list, if_save=None):
-    """opencv"""
-    rows_jpg = []
+def merge_mask(img_ori, mask_list, if_save=None):
+    img_mask = img_ori.copy()
     rows_mask = []
-    for i, j in zip(img_list, mask_list):
-        row_jpg = cv2.hconcat(i)
-        row_mask = cv2.hconcat(j)
-        rows_jpg.append(row_jpg)
+    for i in mask_list:
+        row_mask = cv2.hconcat(i)
         rows_mask.append(row_mask)
-    merged_img = cv2.vconcat(rows_jpg)
     merged_mask = cv2.vconcat(rows_mask)
 
-    merged_img_mask = cv2.addWeighted(merged_img, 1, merged_mask, 0.5, gamma=0)
+    mask = np.zeros((img_mask.shape[0], img_mask.shape[1], 3), dtype=np.uint8)
+    h, w = mask.shape[:2]
+    mh, mw = merged_mask.shape[:2]
+    start_y = (h - mh) // 2
+    start_x = (w - mw) // 2
+    mask[start_y:start_y+mh, start_x:start_x+mw] = merged_mask
+    img_mask = cv2.addWeighted(img_ori, 1, mask, 0.5, gamma=0)
 
     if if_save:
         save_res_dir = data_dir + "_6RES"
         os.makedirs(save_res_dir, exist_ok=True)
-        cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_img.jpg"), merged_img)
-        cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_mask.png"), merged_mask)
-        cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_img_mask.png"), merged_img_mask)
+        cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_img_mask.jpg"), img_mask)
+        cv2.imwrite(os.path.join(save_res_dir, f"{img_name}_mask.png"), mask)
+        if data_path.endswith(".tif"):
+            replace_rgb_in_geotiff(data_path, img_ori,
+                                   output_path=os.path.join(save_res_dir, f"{img_name}_img_mask.tif"))
+    return img_mask, mask
 
-    print("拼接完成！")
-    return merged_img, merged_mask
+
+def replace_rgb_in_geotiff(tif_path, opencv_im, output_path):
+    # Step 1: 读取 GeoTIFF 并转为 (H, W, 4)
+    with rasterio.open(tif_path) as src:
+        profile = src.profile.copy()
+        im_tif = src.read().transpose((1, 2, 0))  # (H, W, 4)
+    # Step 2: 替换 RGB（opencv_im 是 BGR）
+    rgb = cv2.cvtColor(opencv_im, cv2.COLOR_BGR2RGB)  # (H, W, 3)
+    im_tif[..., 0:3] = rgb  # 替换 RGB
+    # Step 3: 转回 rasterio 所需格式 (Bands, H, W)
+    rgba = np.transpose(im_tif, (2, 0, 1))  # (4, H, W)
+    # Step 4: 更新 profile 并写入
+    profile.update({
+        'count': 4,
+        'dtype': rgba.dtype
+    })
+    with rasterio.open(output_path, 'w', **profile) as dst:
+        dst.write(rgba)
 
 
 if __name__ == '__main__':
@@ -444,7 +462,7 @@ if __name__ == '__main__':
     # CONFIG
     mlsd_model_path = r"D:\PyProject\MLSD_YOLO\Project_Emergence\mlsd_taihe_0625_hangdian_0707\best.pth"
     yolo_model_path = r"D:\PyProject\MLSD_YOLO\Project_Emergence\yolo_taihe_0721_hangdian_0722\weights\best.pt"
-    data_path = r"D:\_DATA\Emergence_Detection\taihe_0721\TEST\929_transparent_mosaic_group1.tif"
+    data_path = r"D:\_DATA\Emergence_Detection\taihe_0721\TEST\384.tif"
 
     # START
     mlsd_model = load_model(mlsd_model_path)
@@ -454,8 +472,11 @@ if __name__ == '__main__':
     restored_img_list = []
     restored_mask_list = []
 
+    img_ori = cv2.imread(data_path)
+    if img_ori.shape[2] != 3:
+        img_ori = img_ori[:, :, :3]
     img_list, img_name = crop_window_tif(
-        data_path, if_save=TAG_SAVE_CROP_IMG, window_size=WINDOWS_SIZE, stride=CROP_STRIDE)
+        img_ori, data_path, if_save=TAG_SAVE_CROP_IMG, window_size=WINDOWS_SIZE, stride=CROP_STRIDE)
 
     for i, img_row in tqdm(enumerate(img_list)):
         restored_img_row_list = []
@@ -514,7 +535,7 @@ if __name__ == '__main__':
             # todo：方形图检测
             yolo_img2, mask_img2 = yolo_infer(yolo_model, rotated_img)
             restored_img2 = restore_img(yolo_img2, M1, shape=img.shape[:2])[
-                             IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]]
+                            IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]]
             restored_mask2 = restore_img(mask_img2, M1, shape=img.shape[:2])[
                              IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]]
 
@@ -526,7 +547,7 @@ if __name__ == '__main__':
 
             # todo: merge条形图为底
             restored_mask_black = (restored_mask[:, :, 0] == 0) & (restored_mask[:, :, 1] == 0) & (
-                        restored_mask[:, :, 2] == 0)
+                    restored_mask[:, :, 2] == 0)
             restored_mask = np.where(restored_mask_black[:, :, np.newaxis], restored_mask2, restored_mask)
 
             # 掩码过滤
@@ -543,11 +564,12 @@ if __name__ == '__main__':
         restored_mask_list.append(restored_mask_row_list)
 
     img_list = [[img[IMG_SCOPE[0]:IMG_SCOPE[1], IMG_SCOPE[0]:IMG_SCOPE[1]] for img in img_row] for img_row in img_list]
-    merged_img, merged_mask = merge_jpg_and_mask(img_list, restored_mask_list, if_save=TAG_SAVE_RES)
+    img_ori, mask_ori = merge_mask(img_ori, restored_mask_list, if_save=TAG_SAVE_RES)
+
     # 计算缺苗率
-    blue_area = np.count_nonzero(merged_mask[:, :, 0] == 255)
-    red_area = np.count_nonzero(merged_mask[:, :, 2] == 255)
-    black_area = np.count_nonzero(merged_mask == [0, 0, 0])
+    blue_area = np.count_nonzero(mask_ori[:, :, 0] == 255)
+    red_area = np.count_nonzero(mask_ori[:, :, 2] == 255)
+    black_area = np.count_nonzero(mask_ori == [0, 0, 0])
     print(blue_area)
     print(red_area)
     print(black_area)
